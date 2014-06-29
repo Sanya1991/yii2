@@ -298,30 +298,44 @@ class Security extends Component
         }
 
         if (!isset($this->_keys[$name]) || $regenerate) {
-            $this->_keys[$name] = utf8_encode($this->generateRandomKey($length));
+            $this->_keys[$name] = $this->generateRandomHexKey($length);
             file_put_contents($keyFile, json_encode($this->_keys));
         }
 
-        return utf8_decode($this->_keys[$name]);
+        return $this->_keys[$name];
     }
 
     /**
-     * Generates a random key.
-     * Note the generated key is a binary string with the specified number of bytes in it.
-     * @param integer $length the length of the key that should be generated
+     * Generates a random binary key.
+     *
+     * @param integer $byteLength the length of the key in bytes that should be generated
      * @throws Exception on failure.
      * @return string the generated random key
      */
-    public function generateRandomKey($length = 32)
+    public function generateRandomKey($byteLength = 32)
     {
         if (!extension_loaded('mcrypt')) {
             throw new InvalidConfigException('The mcrypt PHP extension is not installed.');
         }
-        $key = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
+        $key = mcrypt_create_iv($byteLength, MCRYPT_DEV_URANDOM);
         if ($key === false) {
             throw new Exception('Unable to generate random key.');
         }
         return $key;
+    }
+
+    /**
+     * Generates a random string key.
+     *
+     * Note that length is in bytes of binary data, not in characters.
+     *
+     * @param integer $byteLength  the length of the key in bytes that should be generated
+     * @throws Exception Exception on failure.
+     * @return string the generated random key
+     */
+    public function generateRandomHexKey($byteLength = 32)
+    {
+        return bin2hex($this->generateRandomKey($byteLength));
     }
 
     /**
